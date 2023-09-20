@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import breez_sdk.LspInformation
+import breez_sdk.OpeningFeeParamsMenu
 import sample.sdk.breez.page.BreezSdkSampleTheme
 
 @Composable
@@ -74,10 +75,10 @@ fun LspInfoPreview() {
                 1.2,
                 1.toUInt(),
                 67L,
-                89L,
-                emptyList(),
-                4321L,
-                65L,
+                listOf(),
+                OpeningFeeParamsMenu(
+                    emptyList(),
+                ),
             )
         )
     }

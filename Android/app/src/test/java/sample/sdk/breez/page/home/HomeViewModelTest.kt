@@ -17,6 +17,7 @@ import breez_sdk.LspInformation
 import breez_sdk.NodeState
 import breez_sdk.Payment
 import breez_sdk.Rate
+import breez_sdk.ReceivePaymentResponse
 import breez_sdk.ReverseSwapInfo
 import breez_sdk.ReverseSwapPairInfo
 import breez_sdk.SuccessActionProcessed
@@ -54,29 +55,74 @@ import sample.sdk.breez.test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
-    @Mock lateinit var breezSdkWrapper: BreezSdkWrapper
-    @Mock lateinit var resources: Resources
-    @Mock lateinit var config: Config
-    @Mock lateinit var seed: List<UByte>
-    @Mock lateinit var eventListener: EventListener
-    @Mock lateinit var nodeState: NodeState
-    @Mock lateinit var breezSdk: BlockingBreezServices
-    @Mock lateinit var lnInvoice: LnInvoice
-    @Mock lateinit var inProgressSwapOut: ReverseSwapInfo
-    @Mock lateinit var fiatCurrency: FiatCurrency
-    @Mock lateinit var currencyInfo: CurrencyInfo
-    @Mock lateinit var rate: Rate
-    @Mock lateinit var lspInfo: LspInformation
-    @Mock lateinit var payment: Payment
-    @Mock lateinit var swapInfo: SwapInfo
-    @Mock lateinit var reverseSwapInfo: ReverseSwapInfo
-    @Mock lateinit var reverseSwapPairInfo: ReverseSwapPairInfo
-    @Mock lateinit var endPointSuccess: LnUrlPayResult.EndpointSuccess
-    @Mock lateinit var endPointError: LnUrlPayResult.EndpointError
-    @Mock lateinit var successActionProcessed: SuccessActionProcessed
-    @Mock lateinit var lnUrlPayRequestData: LnUrlPayRequestData
-    @Mock lateinit var lnUrlWithdrawRequestData: LnUrlWithdrawRequestData
-    @Mock lateinit var lnUrlAuthRequestData: LnUrlAuthRequestData
+    @Mock
+    lateinit var breezSdkWrapper: BreezSdkWrapper
+
+    @Mock
+    lateinit var resources: Resources
+
+    @Mock
+    lateinit var config: Config
+
+    @Mock
+    lateinit var seed: List<UByte>
+
+    @Mock
+    lateinit var eventListener: EventListener
+
+    @Mock
+    lateinit var nodeState: NodeState
+
+    @Mock
+    lateinit var breezSdk: BlockingBreezServices
+
+    @Mock
+    lateinit var lnInvoice: LnInvoice
+
+    @Mock
+    lateinit var inProgressSwapOut: ReverseSwapInfo
+
+    @Mock
+    lateinit var fiatCurrency: FiatCurrency
+
+    @Mock
+    lateinit var currencyInfo: CurrencyInfo
+
+    @Mock
+    lateinit var rate: Rate
+
+    @Mock
+    lateinit var lspInfo: LspInformation
+
+    @Mock
+    lateinit var payment: Payment
+
+    @Mock
+    lateinit var swapInfo: SwapInfo
+
+    @Mock
+    lateinit var reverseSwapInfo: ReverseSwapInfo
+
+    @Mock
+    lateinit var reverseSwapPairInfo: ReverseSwapPairInfo
+
+    @Mock
+    lateinit var endPointSuccess: LnUrlPayResult.EndpointSuccess
+
+    @Mock
+    lateinit var endPointError: LnUrlPayResult.EndpointError
+
+    @Mock
+    lateinit var successActionProcessed: SuccessActionProcessed
+
+    @Mock
+    lateinit var lnUrlPayRequestData: LnUrlPayRequestData
+
+    @Mock
+    lateinit var lnUrlWithdrawRequestData: LnUrlWithdrawRequestData
+
+    @Mock
+    lateinit var lnUrlAuthRequestData: LnUrlAuthRequestData
 
     private lateinit var inProgressSwapOuts: List<ReverseSwapInfo>
     private lateinit var fiatCurrencies: Map<FiatCurrency, Rate>
@@ -138,18 +184,17 @@ class HomeViewModelTest {
         whenever(rate.coin).thenReturn(currencyCode)
         whenever(rate.value).thenReturn(rateValue)
 
-        whenever(lspInfo.channelFeePermyriad).thenReturn(channelFeePermyriad)
-        whenever(lspInfo.channelMinimumFeeMsat).thenReturn(channelMinimumFeeMsat)
+        whenever(lspInfo.baseFeeMsat).thenReturn(channelFeePermyriad)
+        whenever(lspInfo.baseFeeMsat).thenReturn(channelMinimumFeeMsat)
 
         whenever(reverseSwapPairInfo.feesHash).thenReturn(feeHash)
 
         whenever(endPointSuccess.data).thenReturn(successActionProcessed)
 
         whenever(breezSdk.nodeInfo()).thenReturn(nodeState)
-        whenever(breezSdk.receivePayment(amount.toULong(), description)).thenReturn(lnInvoice)
         whenever(
-            breezSdk.receivePayment(amountOpenChannel.toULong(), description)
-        ).thenReturn(lnInvoice)
+            breezSdk.receivePayment(any())
+        ).thenReturn(ReceivePaymentResponse(lnInvoice, null, null))
         whenever(breezSdk.inProgressReverseSwaps()).thenReturn(inProgressSwapOuts)
         whenever(breezSdk.listFiatCurrencies()).thenReturn(listOf(fiatCurrency))
         whenever(breezSdk.fetchFiatRates()).thenReturn(listOf(rate))
@@ -158,8 +203,8 @@ class HomeViewModelTest {
         whenever(breezSdk.sendPayment(bolt11, amount.toULong())).thenReturn(payment)
         whenever(breezSdk.sendSpontaneousPayment(nodeId, amount.toULong())).thenReturn(payment)
         whenever(breezSdk.inProgressSwap()).thenReturn(swapInfo)
-        whenever(breezSdk.receiveOnchain()).thenReturn(swapInfo)
-        whenever(breezSdk.fetchReverseSwapFees()).thenReturn(reverseSwapPairInfo)
+        whenever(breezSdk.receiveOnchain(any())).thenReturn(swapInfo)
+        whenever(breezSdk.fetchReverseSwapFees(any())).thenReturn(reverseSwapPairInfo)
         whenever(
             breezSdk.sendOnchain(amount.toULong(), address, feeHash, satPerVbyte.toULong())
         ).thenReturn(reverseSwapInfo)
@@ -192,7 +237,7 @@ class HomeViewModelTest {
 
     @Test
     fun `receiveLightningPayment when receivePayment returns null should emit error`() = runTest {
-        whenever(breezSdk.receivePayment(amount.toULong(), description)).thenReturn(null)
+        whenever(breezSdk.receivePayment(any())).thenReturn(null)
         val viewModel = make()
 
         val tester = viewModel.receiveState.test(this)
@@ -341,7 +386,7 @@ class HomeViewModelTest {
     @Test
     fun `receiveOnChain when it fails should emit error`() = runTest {
         whenever(breezSdk.inProgressSwap()).thenReturn(null)
-        whenever(breezSdk.receiveOnchain()).thenReturn(null)
+        whenever(breezSdk.receiveOnchain(any())).thenReturn(null)
         val viewModel = make()
 
         val tester = viewModel.receiveOnChainState.test(this)
@@ -393,7 +438,7 @@ class HomeViewModelTest {
 
     @Test
     fun `sendOnChain when fetchReverseSwapFees fails should emit error`() = runTest {
-        whenever(breezSdk.fetchReverseSwapFees()).thenReturn(null)
+        whenever(breezSdk.fetchReverseSwapFees(any())).thenReturn(null)
         val viewModel = make()
 
         val tester = viewModel.sendOnChainState.test(this)

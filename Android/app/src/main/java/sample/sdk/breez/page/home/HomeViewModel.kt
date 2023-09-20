@@ -9,13 +9,16 @@ import breez_sdk.Config
 import breez_sdk.EventListener
 import breez_sdk.FiatCurrency
 import breez_sdk.InputType
-import breez_sdk.LnInvoice
 import breez_sdk.LnUrlCallbackStatus
 import breez_sdk.LnUrlPayResult
 import breez_sdk.LspInformation
 import breez_sdk.NodeState
 import breez_sdk.Payment
 import breez_sdk.Rate
+import breez_sdk.ReceiveOnchainRequest
+import breez_sdk.ReceivePaymentRequest
+import breez_sdk.ReceivePaymentResponse
+import breez_sdk.ReverseSwapFeesRequest
 import breez_sdk.ReverseSwapInfo
 import breez_sdk.ReverseSwapPairInfo
 import breez_sdk.SwapInfo
@@ -78,7 +81,7 @@ class HomeViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             receiveState.value = ReceiveState.Loading
-            val invoice = receivePayment(amount, description)
+            val invoice = receivePayment(amount, description)?.lnInvoice
             if (invoice == null) {
                 receiveState.value = ReceiveState.Error(
                     SimpleError(resources.getString(R.string.error_receive_payment))
@@ -197,6 +200,7 @@ class HomeViewModel @Inject constructor(
                     is LnUrlPayResult.EndpointSuccess -> {
                         lnUrlPayState.value = LnUrlPayState.Success(lnUrlPay.data)
                     }
+
                     is LnUrlPayResult.EndpointError -> {
                         lnUrlPayState.value = LnUrlPayState.Error(
                             SimpleError(resources.getString(R.string.error_pay_ln_url_end_point))
@@ -224,6 +228,7 @@ class HomeViewModel @Inject constructor(
                     is LnUrlCallbackStatus.Ok -> {
                         lnUrlWithdrawState.value = LnUrlWithdrawState.Success
                     }
+
                     is LnUrlCallbackStatus.ErrorStatus -> {
                         lnUrlWithdrawState.value = LnUrlWithdrawState.Error(
                             SimpleError(resources.getString(R.string.error_pay_ln_withdraw_status))
@@ -249,6 +254,7 @@ class HomeViewModel @Inject constructor(
                     is LnUrlCallbackStatus.Ok -> {
                         lnUrlAuthState.value = LnUrlAuthState.Success
                     }
+
                     is LnUrlCallbackStatus.ErrorStatus -> {
                         lnUrlAuthState.value = LnUrlAuthState.Error(
                             SimpleError(resources.getString(R.string.error_pay_ln_auth_status))
@@ -304,10 +310,10 @@ class HomeViewModel @Inject constructor(
     private suspend fun receivePayment(
         amount: Long,
         description: String,
-    ): LnInvoice? = withContext(io) {
+    ): ReceivePaymentResponse? = withContext(io) {
         Log.v(TAG, "receivePayment: amount: $amount, description: $description")
         try {
-            breezSdk?.receivePayment(amount.toULong(), description)
+            breezSdk?.receivePayment(ReceivePaymentRequest(amount.toULong(), description))
         } catch (e: Throwable) {
             Log.w(TAG, e)
             null
@@ -371,8 +377,8 @@ class HomeViewModel @Inject constructor(
             val lspInfo = breezSdk?.fetchLspInfo(lspid) ?: return@withContext null
 
             // We calculate the dynamic fees in millisatoshis rounded to satoshis.
-            val channelDynamicFeeMsat = amount * lspInfo.channelFeePermyriad / 1000
-            max(lspInfo.channelMinimumFeeMsat, channelDynamicFeeMsat)
+            val channelDynamicFeeMsat = amount * lspInfo.baseFeeMsat / 1000
+            max(lspInfo.baseFeeMsat, channelDynamicFeeMsat)
         } catch (e: Throwable) {
             Log.w(TAG, e)
             null
@@ -386,7 +392,7 @@ class HomeViewModel @Inject constructor(
         try {
             var swap = breezSdk?.inProgressSwap()
             if (swap == null) {
-                swap = breezSdk?.receiveOnchain()
+                swap = breezSdk?.receiveOnchain(ReceiveOnchainRequest(openingFeeParams = null))
             }
             swap
         } catch (e: Throwable) {
@@ -400,7 +406,7 @@ class HomeViewModel @Inject constructor(
     private suspend fun fetchReverseSwapFees(): ReverseSwapPairInfo? = withContext(io) {
         Log.v(TAG, "fetchReverseSwapFees")
         try {
-            breezSdk?.fetchReverseSwapFees()
+            breezSdk?.fetchReverseSwapFees(ReverseSwapFeesRequest(sendAmountSat = null))
         } catch (e: Throwable) {
             Log.w(TAG, e)
             null
@@ -417,7 +423,7 @@ class HomeViewModel @Inject constructor(
     ): ReverseSwapInfo? = withContext(io) {
         Log.v(
             TAG, "sendOnChainTransaction: amount: $amount address: $address " +
-                "feeHash: $feeHash satPerVbyte: $satPerVbyte"
+                    "feeHash: $feeHash satPerVbyte: $satPerVbyte"
         )
         try {
             breezSdk?.sendOnchain(amount.toULong(), address, feeHash, satPerVbyte.toULong())
@@ -468,6 +474,7 @@ class HomeViewModel @Inject constructor(
                     amount.toULong(),
                     comment,
                 )
+
                 else -> null
             }
         } catch (e: Throwable) {
@@ -485,7 +492,7 @@ class HomeViewModel @Inject constructor(
     ): LnUrlCallbackStatus? = withContext(io) {
         Log.v(
             TAG, "withdrawLnUrl: lnUrlWithdrawUrl: $lnUrlWithdrawUrl amount: $amount " +
-                "comment: $comment"
+                    "comment: $comment"
         )
         try {
             when (val inputType = breezSdkWrapper.parseInput(lnUrlWithdrawUrl)) {
@@ -494,6 +501,7 @@ class HomeViewModel @Inject constructor(
                     amount.toULong(),
                     comment,
                 )
+
                 else -> null
             }
         } catch (e: Throwable) {

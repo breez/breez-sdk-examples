@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import breez_sdk.OpeningFeeParams
 import breez_sdk.SwapInfo
 import breez_sdk.SwapStatus
 import sample.sdk.breez.R
@@ -81,6 +82,14 @@ fun ReceiveOnChainPreview() {
                 100L,
                 200L,
                 "A last redeem error",
+                OpeningFeeParams(
+                    minMsat = 4L.toULong(),
+                    proportional = 5.toUInt(),
+                    validUntil = "A valid until",
+                    maxIdleTime = 7.toUInt(),
+                    maxClientToSelfDelay = 8.toUInt(),
+                    promise = "A promise",
+                ),
             ),
         )
     }
