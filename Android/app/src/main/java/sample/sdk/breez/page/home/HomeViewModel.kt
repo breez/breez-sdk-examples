@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import breez_sdk.BlockingBreezServices
+import breez_sdk.BuyBitcoinProvider
+import breez_sdk.BuyBitcoinRequest
 import breez_sdk.Config
 import breez_sdk.EventListener
 import breez_sdk.FiatCurrency
@@ -30,6 +32,7 @@ import kotlinx.coroutines.withContext
 import sample.sdk.breez.BreezSdkWrapper
 import sample.sdk.breez.R
 import sample.sdk.breez.exceptions.SimpleError
+import sample.sdk.breez.page.home.buybitcoin.BuyBitcoinState
 import sample.sdk.breez.page.home.lnurlauth.LnUrlAuthState
 import sample.sdk.breez.page.home.lnurlpay.LnUrlPayState
 import sample.sdk.breez.page.home.lnurlwithdraw.LnUrlWithdrawState
@@ -65,6 +68,7 @@ class HomeViewModel @Inject constructor(
     val lnUrlPayState = MutableStateFlow<LnUrlPayState>(LnUrlPayState.Initial)
     val lnUrlWithdrawState = MutableStateFlow<LnUrlWithdrawState>(LnUrlWithdrawState.Initial)
     val lnUrlAuthState = MutableStateFlow<LnUrlAuthState>(LnUrlAuthState.Initial)
+    val buyBitcoinState = MutableStateFlow<BuyBitcoinState>(BuyBitcoinState.Initial())
 
     private var breezSdk: BlockingBreezServices? = null
 
@@ -261,6 +265,20 @@ class HomeViewModel @Inject constructor(
                         )
                     }
                 }
+            }
+        }
+    }
+
+    fun buyBitcoin(provider: BuyBitcoinProvider) {
+        viewModelScope.launch {
+            buyBitcoinState.value = BuyBitcoinState.Loading
+            val url = buyBitcoin(BuyBitcoinRequest(provider))
+            if (url == null) {
+                buyBitcoinState.value = BuyBitcoinState.Error(
+                    SimpleError(resources.getString(R.string.error_buying_bitcoin))
+                )
+            } else {
+                buyBitcoinState.value = BuyBitcoinState.Success(url)
             }
         }
     }
@@ -557,6 +575,20 @@ class HomeViewModel @Inject constructor(
             null
         }.also {
             Log.v(TAG, "fetchFiatCurrencies result: $it")
+        }
+    }
+
+    private suspend fun buyBitcoin(
+        req: BuyBitcoinRequest,
+    ): String? = withContext(io) {
+        Log.v(TAG, "buyBitcoin: $req")
+        try {
+            breezSdk?.buyBitcoin(req)?.url
+        } catch (e: Throwable) {
+            Log.w(TAG, e)
+            null
+        }.also {
+            Log.v(TAG, "buyBitcoin result: $it")
         }
     }
 

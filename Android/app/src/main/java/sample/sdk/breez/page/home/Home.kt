@@ -20,8 +20,8 @@ import breez_sdk.FiatCurrency
 import breez_sdk.Rate
 import breez_sdk.ReverseSwapInfo
 import breez_sdk.ReverseSwapStatus
-import sample.sdk.breez.page.BreezSdkSampleTheme
 import sample.sdk.breez.R
+import sample.sdk.breez.page.BreezSdkSampleTheme
 import sample.sdk.breez.page.home.fiatcurrency.FiatCurrency
 import sample.sdk.breez.page.home.inprogressreverseswap.InProgressReverseSwap
 import sample.sdk.breez.page.home.section.Section
@@ -41,6 +41,7 @@ fun Home(
     lnUrlPayComposable: @Composable ColumnScope.() -> Unit,
     lnUrlWithdrawComposable: @Composable ColumnScope.() -> Unit,
     lnUrlAuthComposable: @Composable ColumnScope.() -> Unit,
+    buyBitcoinComposable: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
         Modifier
@@ -131,6 +132,11 @@ fun Home(
         )
 
         Section(
+            stringResource(id = R.string.section_buy_bitcoin),
+            buyBitcoinComposable,
+        )
+
+        Section(
             stringResource(R.string.section_fiat_currencies),
         ) {
             Spacer(Modifier.padding(top = 12.dp))
@@ -186,6 +192,7 @@ fun HomePreview() {
             lnUrlPayComposable = {},
             lnUrlWithdrawComposable = {},
             lnUrlAuthComposable = {},
+            buyBitcoinComposable = {},
         )
     }
 }

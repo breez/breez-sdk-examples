@@ -2,6 +2,8 @@ package sample.sdk.breez.page.home
 
 import android.content.res.Resources
 import breez_sdk.BlockingBreezServices
+import breez_sdk.BuyBitcoinProvider
+import breez_sdk.BuyBitcoinResponse
 import breez_sdk.Config
 import breez_sdk.CurrencyInfo
 import breez_sdk.EventListener
@@ -20,6 +22,7 @@ import breez_sdk.Rate
 import breez_sdk.ReceivePaymentResponse
 import breez_sdk.ReverseSwapInfo
 import breez_sdk.ReverseSwapPairInfo
+import breez_sdk.SdkException
 import breez_sdk.SuccessActionProcessed
 import breez_sdk.SwapInfo
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +44,7 @@ import org.mockito.kotlin.whenever
 import sample.sdk.breez.BreezSdkWrapper
 import sample.sdk.breez.advance
 import sample.sdk.breez.exceptions.SimpleError
+import sample.sdk.breez.page.home.buybitcoin.BuyBitcoinState
 import sample.sdk.breez.page.home.lnurlauth.LnUrlAuthState
 import sample.sdk.breez.page.home.lnurlpay.LnUrlPayState
 import sample.sdk.breez.page.home.lnurlwithdraw.LnUrlWithdrawState
@@ -152,6 +156,7 @@ class HomeViewModelTest {
     private val lnUrlWithdrawUrl = "A ln url withdraw url"
     private val lnUrlAuthUrl = "A ln url auth url"
     private val comment = "A comment"
+    private val buyBitcoinUrl = "A buy bitcoin url"
 
     @Before
     fun setUp() {
@@ -215,6 +220,7 @@ class HomeViewModelTest {
             breezSdk.withdrawLnurl(lnUrlWithdrawRequestData, amount.toULong(), comment)
         ).thenReturn(LnUrlCallbackStatus.Ok)
         whenever(breezSdk.lnurlAuth(lnUrlAuthRequestData)).thenReturn(LnUrlCallbackStatus.Ok)
+        whenever(breezSdk.buyBitcoin(any())).thenReturn(BuyBitcoinResponse(buyBitcoinUrl, null))
     }
 
     @After
@@ -673,6 +679,39 @@ class HomeViewModelTest {
             LnUrlAuthState.Initial,
             LnUrlAuthState.Loading,
             LnUrlAuthState.Error(error),
+        )
+    }
+
+    @Test
+    fun `buyBitcoin should emit success`() = runTest {
+        val viewModel = make()
+
+        val tester = viewModel.buyBitcoinState.test(this)
+        advance()
+        viewModel.buyBitcoin(BuyBitcoinProvider.MOONPAY)
+        advance()
+
+        tester.assertValuesAndFinish(
+            BuyBitcoinState.Initial(),
+            BuyBitcoinState.Loading,
+            BuyBitcoinState.Success(buyBitcoinUrl),
+        )
+    }
+
+    @Test
+    fun `buyBitcoin when fails should emit error`() = runTest {
+        whenever(breezSdk.buyBitcoin(any())).thenThrow(SdkException.Generic(""))
+        val viewModel = make()
+
+        val tester = viewModel.buyBitcoinState.test(this)
+        advance()
+        viewModel.buyBitcoin(BuyBitcoinProvider.MOONPAY)
+        advance()
+
+        tester.assertValuesAndFinish(
+            BuyBitcoinState.Initial(),
+            BuyBitcoinState.Loading,
+            BuyBitcoinState.Error(error),
         )
     }
 

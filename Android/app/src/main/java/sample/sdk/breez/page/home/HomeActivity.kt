@@ -1,6 +1,9 @@
 package sample.sdk.breez.page.home
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -9,8 +12,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import breez_sdk.BuyBitcoinProvider
 import dagger.hilt.android.AndroidEntryPoint
 import sample.sdk.breez.page.BreezSdkSampleTheme
+import sample.sdk.breez.page.home.buybitcoin.BuyBitcoinAction
+import sample.sdk.breez.page.home.buybitcoin.BuyBitcoinState
+import sample.sdk.breez.page.home.buybitcoin.BuyBitcoinUrlOpener
 import sample.sdk.breez.page.home.lnurlauth.LnUrlAuth
 import sample.sdk.breez.page.home.lnurlauth.LnUrlAuthAction
 import sample.sdk.breez.page.home.lnurlauth.LnUrlAuthState
@@ -41,6 +48,7 @@ import sample.sdk.breez.page.home.spontaneous.SpontaneousPayment
 import sample.sdk.breez.page.home.spontaneous.SpontaneousPaymentAction
 import sample.sdk.breez.page.home.spontaneous.SpontaneousState
 
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -59,6 +67,7 @@ class MainActivity : ComponentActivity() {
             val lnUrlPayState = viewModel.lnUrlPayState.collectAsState()
             val lnUrlWithdrawState = viewModel.lnUrlWithdrawState.collectAsState()
             val lnUrlAuthState = viewModel.lnUrlAuthState.collectAsState()
+            val buyBitcoinState = viewModel.buyBitcoinState.collectAsState()
 
             BreezSdkSampleTheme {
                 Surface(
@@ -84,9 +93,11 @@ class MainActivity : ComponentActivity() {
                                         paymentState.invoice,
                                         paymentState.openingChannelFee,
                                     )
+
                                     is ReceiveState.Error -> SectionError(
                                         paymentState.throwable,
                                     )
+
                                     ReceiveState.Loading -> SectionLoading()
                                     ReceiveState.Initial -> ReceivePaymentAction(
                                         ::onReceivePaymentClick,
@@ -98,9 +109,11 @@ class MainActivity : ComponentActivity() {
                                     is SendPaymentState.Success -> SendPayment(
                                         paymentState.payment,
                                     )
+
                                     is SendPaymentState.Error -> SectionError(
                                         paymentState.throwable,
                                     )
+
                                     SendPaymentState.Loading -> SectionLoading()
                                     SendPaymentState.Initial -> SendPaymentAction(
                                         ::onSendPaymentClick,
@@ -112,9 +125,11 @@ class MainActivity : ComponentActivity() {
                                     is SpontaneousState.Success -> SpontaneousPayment(
                                         paymentState.payment,
                                     )
+
                                     is SpontaneousState.Error -> SectionError(
                                         paymentState.throwable,
                                     )
+
                                     SpontaneousState.Loading -> SectionLoading()
                                     SpontaneousState.Initial -> SpontaneousPaymentAction(
                                         ::onSendSpontaneousPaymentClick,
@@ -126,9 +141,11 @@ class MainActivity : ComponentActivity() {
                                     is ReceiveOnChainState.Success -> ReceiveOnChain(
                                         onChainState.swapInfo,
                                     )
+
                                     is ReceiveOnChainState.Error -> SectionError(
                                         onChainState.throwable,
                                     )
+
                                     ReceiveOnChainState.Loading -> SectionLoading()
                                     ReceiveOnChainState.Initial -> ReceiveOnChainAction(
                                         ::onReceiveOnChainClick,
@@ -140,9 +157,11 @@ class MainActivity : ComponentActivity() {
                                     is SendOnChainState.Success -> SendOnChain(
                                         onChainState.swapInfo,
                                     )
+
                                     is SendOnChainState.Error -> SectionError(
                                         onChainState.throwable,
                                     )
+
                                     SendOnChainState.Loading -> SectionLoading()
                                     SendOnChainState.Initial -> SendOnChainAction(
                                         ::onSendOnChainClick,
@@ -154,9 +173,11 @@ class MainActivity : ComponentActivity() {
                                     is LspInfoState.Success -> LspInfo(
                                         lspInfo.lspInfo,
                                     )
+
                                     is LspInfoState.Error -> SectionError(
                                         lspInfo.throwable,
                                     )
+
                                     LspInfoState.Loading -> SectionLoading()
                                     LspInfoState.Initial -> LspInfoAction(
                                         ::onLspInfoClick,
@@ -168,9 +189,11 @@ class MainActivity : ComponentActivity() {
                                     is LnUrlPayState.Success -> LnUrlPay(
                                         lnUrlPay.result,
                                     )
+
                                     is LnUrlPayState.Error -> SectionError(
                                         lnUrlPay.throwable,
                                     )
+
                                     LnUrlPayState.Loading -> SectionLoading()
                                     LnUrlPayState.Initial -> LnUrlPayAction(
                                         ::onLnUrlPayAction,
@@ -183,6 +206,7 @@ class MainActivity : ComponentActivity() {
                                     is LnUrlWithdrawState.Error -> SectionError(
                                         lnUrlWithdraw.throwable,
                                     )
+
                                     LnUrlWithdrawState.Loading -> SectionLoading()
                                     LnUrlWithdrawState.Initial -> LnUrlWithdrawAction(
                                         ::onLnUrlWithdrawAction,
@@ -195,12 +219,32 @@ class MainActivity : ComponentActivity() {
                                     is LnUrlAuthState.Error -> SectionError(
                                         lnUrlAuth.throwable,
                                     )
+
                                     LnUrlAuthState.Loading -> SectionLoading()
                                     LnUrlAuthState.Initial -> LnUrlAuthAction(
                                         ::onLnUrlAuthAction,
                                     )
                                 }
-                            }
+                            },
+                            buyBitcoinComposable = {
+                                when (val buyBitcoin = buyBitcoinState.value) {
+                                    is BuyBitcoinState.Initial -> BuyBitcoinAction(
+                                        buyBitcoin.initialProvider,
+                                        ::onBuyBitcoinClick,
+                                    )
+
+                                    is BuyBitcoinState.Success -> BuyBitcoinUrlOpener(
+                                        buyBitcoin.url,
+                                        ::onBuyBitcoinUrlClick,
+                                    )
+
+                                    is BuyBitcoinState.Error -> SectionError(
+                                        buyBitcoin.throwable,
+                                    )
+
+                                    BuyBitcoinState.Loading -> SectionLoading()
+                                }
+                            },
                         )
 
                     }
@@ -253,6 +297,16 @@ class MainActivity : ComponentActivity() {
         lnUrlAuthUrl: String,
     ) {
         viewModel.lnUrlAuth(lnUrlAuthUrl)
+    }
+
+    private fun onBuyBitcoinClick(provider: BuyBitcoinProvider) {
+        viewModel.buyBitcoin(provider)
+    }
+
+    private fun onBuyBitcoinUrlClick(url: String) = try {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    } catch (e: Exception) {
+        Log.e("MainActivity", "onBuyBitcoinUrlClick", e)
     }
 
 }

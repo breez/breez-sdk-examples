@@ -17,6 +17,7 @@
     <string name="error_pay_ln_withdraw_status">Error on status while withdrawing the LnUrl</string>
     <string name="error_pay_ln_auth">Failed to auth with the LnUrl</string>
     <string name="error_pay_ln_auth_status">Error on status while authing with the LnUrl</string>
+    <string name="error_buying_bitcoin">Error trying to buy Bitcoin</string>
 
     <string name="section_receiving_lightning_payments">Receiving Lightning Payments</string>
     <string name="section_sending_lightning_payments">Sending Lightning Payments</string>
@@ -29,6 +30,7 @@
     <string name="section_ln_url_withdraw">LNURL-Withdraw</string>
     <string name="section_ln_url_auth">LNURL-Auth</string>
     <string name="section_fiat_currencies">Fiat currencies</string>
+    <string name="section_buy_bitcoin">Buy bitcoin</string>
 
     <string name="onchain_balance">Onchain balance: %d</string>
     <string name="lightning_balance">Lightning balance: %d</string>
@@ -71,4 +73,9 @@
     <string name="ln_url_auth_success">Auth complete</string>
 
     <string name="fiat_currency_value">%.2f</string>
+
+    <string name="buy_bitcoin">Buy Bitcoin using %s</string>
+    <string name="buy_bitcoin_provider_moonpay">MoonPay</string>
+    <string name="buy_bitcoin_open_url">Open the following URL and follow the instructions to proceed with the Bitcoin acquisition</string>
+    <string name="buy_bitcoin_open_url_action">Open</string>
 </resources>
