@@ -17,7 +17,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import sample.sdk.breez.EventListenerExample
-import technology.breez.BuildConfig
 import java.io.File
 import javax.inject.Named
 import javax.inject.Singleton
@@ -36,13 +35,7 @@ object SingletonModule {
     )
 
     @[Provides Reusable]
-    fun providesEnvironmentType(): EnvironmentType {
-        return if (BuildConfig.DEBUG) {
-            EnvironmentType.STAGING
-        } else {
-            EnvironmentType.PRODUCTION
-        }
-    }
+    fun providesEnvironmentType(): EnvironmentType = EnvironmentType.PRODUCTION
 
     @[Provides Singleton]
     fun providesGreenlightNodeConfig(): GreenlightNodeConfig = GreenlightNodeConfig(

@@ -6,7 +6,7 @@ hilt = "2.47"
 kotlin = "1.8.22"
 
 [libraries]
-breez = { module = "breez_sdk:bindings-android", version = "0.2.3" }
+breez = { module = "technology.breez:breez-sdk-kmp-android", version = "0.2.6" }
 composeActivity = { module = "androidx.activity:activity-compose", version = "1.7.2" }
 composeIconsExtended = { module = "androidx.compose.material:material-icons-extended", version.ref = "compose" }
 composeMaterial3 = { module = "androidx.compose.material3:material3", version = "1.1.1" }

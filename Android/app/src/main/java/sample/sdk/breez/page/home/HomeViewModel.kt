@@ -13,6 +13,7 @@ import breez_sdk.FiatCurrency
 import breez_sdk.InputType
 import breez_sdk.LnUrlCallbackStatus
 import breez_sdk.LnUrlPayResult
+import breez_sdk.LnUrlWithdrawResult
 import breez_sdk.LspInformation
 import breez_sdk.NodeState
 import breez_sdk.Payment
@@ -229,11 +230,11 @@ class HomeViewModel @Inject constructor(
                 )
             } else {
                 when (lnUrlWithdraw) {
-                    is LnUrlCallbackStatus.Ok -> {
+                    is LnUrlWithdrawResult.Ok -> {
                         lnUrlWithdrawState.value = LnUrlWithdrawState.Success
                     }
 
-                    is LnUrlCallbackStatus.ErrorStatus -> {
+                    is LnUrlWithdrawResult.ErrorStatus -> {
                         lnUrlWithdrawState.value = LnUrlWithdrawState.Error(
                             SimpleError(resources.getString(R.string.error_pay_ln_withdraw_status))
                         )
@@ -507,7 +508,7 @@ class HomeViewModel @Inject constructor(
         lnUrlWithdrawUrl: String,
         amount: Long,
         comment: String,
-    ): LnUrlCallbackStatus? = withContext(io) {
+    ): LnUrlWithdrawResult? = withContext(io) {
         Log.v(
             TAG, "withdrawLnUrl: lnUrlWithdrawUrl: $lnUrlWithdrawUrl amount: $amount " +
                     "comment: $comment"
