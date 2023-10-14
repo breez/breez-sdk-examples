@@ -13,9 +13,11 @@ impl EventListener for AppEventListener {
 }
 
 /// On first run (if you don't already have a node), set the `invite_code` and leave `mnemonic` as None.
-///
+/// A new mnemonic is generated and printed to console.
 /// On subsequent runs, or if you already have a node, set the `mnemonic`. The `invite_code` can be left empty.
-async fn get_sdk(
+///
+/// If you have a Greenlight partner certificate, use [get_sdk_with_partner_certificate] instead.
+async fn get_sdk_with_invite_code(
     breez_sdk_api_key: &str,
     working_dir: &str,
     invite_code: Option<&str>,
@@ -52,6 +54,53 @@ async fn get_sdk(
     Ok(sdk)
 }
 
+/// On first run (if you don't already have a node), leave `mnemonic` as None. A new mnemonic is
+/// generated and printed to console.
+///
+/// On subsequent runs, or if you already have a node, set the `mnemonic`.
+///
+/// The device key `client-key.pem` and certificate `client.crt` are read from the current directory.
+///
+/// If you have an invite code instead of a partner certificate, use [get_sdk_with_invite_code].
+async fn get_sdk_with_partner_certificate(
+    breez_sdk_api_key: &str,
+    working_dir: &str,
+    mnemonic: Option<&str>,
+) -> Result<Arc<BreezServices>> {
+    let mnemonic_obj = match mnemonic {
+        None => {
+            let mnemonic = Mnemonic::generate_in(Language::English, 12)?;
+            println!("Generated mnemonic: {mnemonic}");
+            mnemonic
+        }
+        Some(mnemonic_str) => Mnemonic::from_str(mnemonic_str)?,
+    };
+
+    let seed = mnemonic_obj.to_seed("");
+
+    let mut config = BreezServices::default_config(
+        EnvironmentType::Production,
+        breez_sdk_api_key.into(),
+        breez_sdk_core::NodeConfig::Greenlight {
+            config: GreenlightNodeConfig {
+                partner_credentials: Some(GreenlightCredentials {
+                    device_key: std::fs::read("client-key.pem")?,
+                    device_cert: std::fs::read("client.crt")?,
+                }),
+                invite_code: None,
+            },
+        },
+    );
+    config.working_dir = working_dir.into();
+
+    // Create working dir if it doesn't exist
+    std::fs::create_dir_all(working_dir)?;
+
+    let sdk = BreezServices::connect(config, seed.to_vec(), Box::new(AppEventListener {})).await?;
+
+    Ok(sdk)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let log_dir = "sdk-log-dir";
@@ -60,7 +109,7 @@ async fn main() -> Result<()> {
 
     let breez_sdk_api_key = "...";
 
-    let sdk_1 = get_sdk(
+    let sdk_1 = get_sdk_with_invite_code(
         breez_sdk_api_key,
         "working-dir-1",
         Some("..."), // Invite code for SDK 1
@@ -70,7 +119,7 @@ async fn main() -> Result<()> {
 
     info!("[sdk_1] Node info: {:#?}", sdk_1.node_info()?);
 
-    let sdk_2 = get_sdk(
+    let sdk_2 = get_sdk_with_invite_code(
         breez_sdk_api_key,
         "working-dir-2", // Separate working dir
         Some("..."),     // Invite code for SDK 2
