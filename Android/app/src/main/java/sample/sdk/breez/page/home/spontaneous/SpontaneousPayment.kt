@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import breez_sdk.LnPaymentDetails
 import breez_sdk.Payment
 import breez_sdk.PaymentDetails
+import breez_sdk.PaymentStatus
 import breez_sdk.PaymentType
 import sample.sdk.breez.page.BreezSdkSampleTheme
 
@@ -53,7 +54,7 @@ fun SpontaneousPaymentPreview() {
                 1689788251L,
                 3000L.toULong(),
                 123L.toULong(),
-                true,
+                PaymentStatus.PENDING,
                 "A description",
                 PaymentDetails.Ln(
                     data = LnPaymentDetails(
@@ -63,6 +64,7 @@ fun SpontaneousPaymentPreview() {
                         "A payment pre image",
                         true,
                         "A bolt 11",
+                        null,
                         null,
                         null,
                         null,
