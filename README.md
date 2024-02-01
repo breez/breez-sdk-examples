@@ -17,3 +17,4 @@ Workshop projects that demonstrate a minimalistic app with Breez SDK integration
 
 * https://github.com/JssDWt/breez_sdk_flutter_workshop (Flutter)
 * https://github.com/JssDWt/breez_sdk_3hour_workshop (Rust)
+* https://github.com/dangeross/breez-wolfpack-3-demo (Go)
